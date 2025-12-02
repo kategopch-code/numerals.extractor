@@ -18,11 +18,14 @@ except Exception as e:
 def merge_numerals(doc):
     matcher = Matcher(doc.vocab)
     
+    noun_numerals = ["тисяча", "мільйон", "мільярд", "трильйон"]
+    
     pattern_compound = [
         [{"POS": "NUM"}, {"POS": "NUM", "OP": "+"}],
         [{"POS": "NUM"}, {"TEXT": "-"}, {"POS": "NUM"}],
         [{"POS": "NUM"}, {"LOWER": "цілих"}, {"POS": "NUM", "OP": "*"}],
-        [{"POS": "NUM"}, {"LOWER": "ціла"}, {"POS": "NUM", "OP": "*"}]
+        [{"POS": "NUM"}, {"LOWER": "ціла"}, {"POS": "NUM", "OP": "*"}],
+        [{"POS": "NUM"}, {"LEMMA": {"IN": noun_numerals}}, {"POS": "NUM", "OP": "*"}]
     ]
     matcher.add("COMPOUND_NUMERALS", pattern_compound)
     
@@ -133,11 +136,14 @@ def extract_numerals_info(text: str) -> List[Dict[str, Any]]:
         doc = merge_numerals(doc)
         results = []
         
+        noun_numerals = ["тисяча", "мільйон", "мільярд", "трильйон"]
+        
         for token in doc:
             is_numeral = token.pos_ == "NUM"
             is_potential_ordinal = token.pos_ == "ADJ" and "NumType=Ord" in str(token.morph)
+            is_noun_numeral = token.lemma_.lower() in noun_numerals
             
-            if is_numeral or is_potential_ordinal:
+            if is_numeral or is_potential_ordinal or is_noun_numeral:
                 details = analyze_numeral_details(token)
                 
                 results.append({
