@@ -62,7 +62,7 @@ if st.button("2. Аналізувати текст", type="primary"):
        
     df = pd.DataFrame(results)
             
-    df = df.drop(columns=['start', 'end', 'pos_tag', 'detail_tag'])
+    df = df.drop(columns=['morphology', 'lemma'])
         
     df.columns = ["Слово", "Лема", "Морфологічні Ознаки", "Значення", "Будова", "Відмінок"]
         
