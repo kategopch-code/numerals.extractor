@@ -18,14 +18,15 @@ except Exception as e:
 def merge_numerals(doc):
     matcher = Matcher(doc.vocab)
     
-    noun_numerals = ["тисяча", "мільйон", "мільярд", "трильйон"]
+    noun_numerals = ["тисяча", "мільйон", "мільярд", "трильйон", "півтора", "півтори", "пів"]
     
     pattern_compound = [
         [{"POS": "NUM"}, {"POS": "NUM", "OP": "+"}],
         [{"POS": "NUM"}, {"TEXT": "-"}, {"POS": "NUM"}],
         [{"POS": "NUM"}, {"LOWER": "цілих"}, {"POS": "NUM", "OP": "*"}],
         [{"POS": "NUM"}, {"LOWER": "ціла"}, {"POS": "NUM", "OP": "*"}],
-        [{"POS": "NUM"}, {"LEMMA": {"IN": noun_numerals}}, {"POS": "NUM", "OP": "*"}]
+        [{"POS": "NUM"}, {"LEMMA": {"IN": noun_numerals}}, {"POS": "NUM", "OP": "*"}],
+        [{"LEMMA": {"IN": noun_numerals}}, {"POS": "NUM", "OP": "*"}]
     ]
     matcher.add("COMPOUND_NUMERALS", pattern_compound)
     
@@ -53,11 +54,13 @@ def get_structure_type(text: str, lemma: str) -> str:
 
     complex_suffixes = (
         'надцять', 'дцять', 'десят', 'сотий', 'сот', 'ста', 'сті', 'сота', 'соте', 
-        'тисячний', 'мільйонний', 'мільярдний', 'дцятий', 'десятий', 'сотих', 'сотою' 
+        'тисячний', 'мільйонний', 'мільярдний', 'дцятий', 'десятий', 'сотих', 'сотою'
     )
     complex_bases = (
         'одинадцять', 'дванадцять', 'тринадцять', 'чотирнадцять', 'шістнадцять', 'сімнадцять', 'вісімнадцять', 'дев\'ятнадцять',
-        'одинадцятий', 'дванадцятий', 'тринадцятий', 'чотирнадцятий', 'шістнадцятий', 'сімнадцятий', 'вісімнадцятий', 'дев\'ятнадцятий'
+        'одинадцятий', 'дванадцятий', 'тринадцятий', 'чотирнадцятий', 'шістнадцятий', 'сімнадцятий', 'вісімнадцятий', 'дев\'ятнадцятий',
+        'двісті', 'триста', 'чотириста', 'п\'ятсот', 'шістсот', 'сімсот', 'вісімсот', 'дев\'ятсот',
+        'двохсотий', 'трьохсотий', 'чотирьохсотий', 'п\'ятисотий', 'шестисотий', 'семисотий', 'восьмисотий', 'дев\'ятисотий'
     )
 
     lower_text = text.lower()
@@ -82,7 +85,7 @@ def get_value_type(token, is_ordinal: bool) -> str:
     if is_ordinal or "NumType=Ord" in morph:
         return "Порядковий"
 
-    indefinite_lemmas = ['кілька', 'декілька', 'багато', 'небагато', 'чимало', 'мало', 'скільки', 'стільки']
+    indefinite_lemmas = ['кілька', 'декілька', 'багато', 'небагато', 'чимало', 'мало', 'скільки', 'стільки', 'немало']
     if lemma in indefinite_lemmas:
         return "Кількісний (неозначено-кількісний)"
 
@@ -90,7 +93,8 @@ def get_value_type(token, is_ordinal: bool) -> str:
     if "NumType=Sets" in morph or lemma in collective_lemmas:
         return "Кількісний (збірний)"
 
-    if "NumType=Frac" in morph or "цілих" in text or "ціла" in text or re.search(r'\d+[.,\\/]\d+', text):
+    fractional_lemmas = ['півтора', 'півтори', 'пів', 'третина', 'чверть']
+    if "NumType=Frac" in morph or lemma in fractional_lemmas or "цілих" in text or "ціла" in text or re.search(r'\d+[.,\\/]\d+', text):
         return "Кількісний (дробовий)"
     
     return "Кількісний (власне)"
@@ -136,7 +140,7 @@ def extract_numerals_info(text: str) -> List[Dict[str, Any]]:
         doc = merge_numerals(doc)
         results = []
         
-        noun_numerals = ["тисяча", "мільйон", "мільярд", "трильйон"]
+        noun_numerals = ["тисяча", "мільйон", "мільярд", "трильйон", "півтора", "півтори", "пів"]
         
         for token in doc:
             is_numeral = token.pos_ == "NUM"
