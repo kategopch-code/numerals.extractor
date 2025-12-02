@@ -37,16 +37,24 @@ if st.button("2. Аналізувати текст", type="primary"):
     with st.spinner('Обробка тексту та запуск NLP-моделі...'):
         results: List[Dict[str, Any]] = extract_numerals_info(input_text)
     
-    if not results:
+    error_items = [res for res in results if "type" in res and ("ERROR" in res["type"] or "start" not in res)]
+    
+    if error_items:
+        st.error(f"❌ {error_items[0]['text']}")
+        st.stop()
+
+    valid_results = [res for res in results if "start" in res]
+
+    if not valid_results:
         st.info("💡 Числівників у тексті не знайдено.")
     else:
-        st.success(f"✅ Знайдено числівників: **{len(results)}**")
+        st.success(f"✅ Знайдено числівників: **{len(valid_results)}**")
         
         st.markdown("### Виділений текст:")
         annotated_text = []
         last_idx = 0
         
-        sorted_nums = sorted(results, key=lambda x: x['start'])
+        sorted_nums = sorted(valid_results, key=lambda x: x['start'])
         
         for item in sorted_nums:
             annotated_text.append(input_text[last_idx:item['start']])
@@ -60,7 +68,7 @@ if st.button("2. Аналізувати текст", type="primary"):
         
         st.markdown("### 📊 Деталі лінгвістичного аналізу:")
         
-        df = pd.DataFrame(results)
+        df = pd.DataFrame(valid_results)
         
         columns_to_keep = ["text", "lemma", "morphology", "Значення", "Будова", "Відмінок"]
         
