@@ -31,17 +31,7 @@ def merge_numerals(doc):
             retokenizer.merge(doc[start:end], attrs={"POS": "NUM"})
     return doc
 
-def get_structure_type(text: str) -> str:
-    if " " in text:
-        return "Складений"
-    
-    if re.match(r'^\d+$', text) or re.match(r'^\d+[.,\\/]\d+$', text):
-        return "Простий"
-
-    complex_suffixes = ('надцять', 'десят', 'сот', 'ста', 'сті', 'сотий', 'тисячний', 'мільйонний')
-    lower_text = text.lower()
-    
-def get_structure_type(text: str) -> str:
+def get_structure_type(text: str, lemma: str) -> str:
     
     if " " in text:
         return "Складений"
@@ -62,8 +52,12 @@ def get_structure_type(text: str) -> str:
     )
 
     lower_text = text.lower()
+    lower_lemma = lemma.lower()
     
-    if lower_text in complex_bases:
+    if lower_text in complex_bases or lower_lemma in complex_bases:
+        return "Складний"
+
+    if 'надцят' in lower_text:
         return "Складний"
     
     if any(lower_text.endswith(s) for s in complex_suffixes) and lower_text not in ('сто', 'місто', 'одно'):
@@ -97,7 +91,7 @@ def analyze_numeral_details(token) -> Dict[str, str]:
     is_ordinal = (token.pos_ == "ADJ" and "NumType=Ord" in morph_data) or "Order" in morph_data
     
     value_type = get_value_type(token, is_ordinal)
-    structure_type = get_structure_type(token.text)
+    structure_type = get_structure_type(token.text, token.lemma_)
     
     details = {
         "value_type": value_type,
