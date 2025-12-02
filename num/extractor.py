@@ -41,12 +41,31 @@ def get_structure_type(text: str) -> str:
     complex_suffixes = ('надцять', 'десят', 'сот', 'ста', 'сті', 'сотий', 'тисячний', 'мільйонний')
     lower_text = text.lower()
     
-    if any(lower_text.endswith(s) for s in complex_suffixes) and lower_text not in ('сто', 'місто'):
-        return "Складний"
+def get_structure_type(text: str) -> str:
+    
+    if " " in text:
+        return "Складений"
     
     if '-' in text and not re.search(r'\d', text):
         return "Складний"
+    
+    if re.match(r'^\d+$', text) or re.match(r'^\d+[.,\\/]\d+$', text):
+        return "Простий"
 
+    complex_suffixes = (
+        'надцять', 'дцять', 'десят', 'сотий', 'сот', 'ста', 'сті', 'сота', 'соте', 
+        'тисячний', 'мільйонний', 'мільярдний', 'дванадцятий', 'одинадцятий'
+    )
+    complex_bases = ('одинадцять', 'дванадцять', 'тринадцять', 'чотирнадцять', 'шістнадцять', 'сімнадцять', 'вісімнадцять', 'дев\'ятнадцять')
+
+    lower_text = text.lower()
+    
+    if lower_text in complex_bases:
+        return "Складний"
+    
+    if any(lower_text.endswith(s) for s in complex_suffixes) and lower_text not in ('сто', 'місто', 'одно'):
+        return "Складний"
+    
     return "Простий"
 
 def get_value_type(token, is_ordinal: bool) -> str:
