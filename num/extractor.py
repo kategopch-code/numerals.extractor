@@ -1,6 +1,7 @@
 import spacy
 from spacy.matcher import Matcher
 from spacy.tokens import Token
+from spacy import util
 import re
 from typing import List, Dict, Any
 
@@ -26,9 +27,14 @@ def merge_numerals(doc):
     matcher.add("COMPOUND_NUMERALS", pattern_compound)
     
     matches = matcher(doc)
+    
+    spans = [doc[start:end] for _, start, end in matches]
+    filtered_spans = util.filter_spans(spans)
+    
     with doc.retokenize() as retokenizer:
-        for match_id, start, end in matches:
-            retokenizer.merge(doc[start:end], attrs={"POS": "NUM"})
+        for span in filtered_spans:
+            retokenizer.merge(span, attrs={"POS": "NUM"})
+            
     return doc
 
 def get_structure_type(text: str, lemma: str) -> str:
