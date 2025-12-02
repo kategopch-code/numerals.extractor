@@ -59,11 +59,13 @@ if st.button("2. Аналізувати текст", type="primary"):
         st.markdown("---")
         
         st.markdown("### 📊 Деталі лінгвістичного аналізу:")
-       
-    df = pd.DataFrame(results)
-            
-    df = df.drop(columns=['morphology', 'lemma'])
         
-    df.columns = ["Слово", "Лема", "Морфологічні Ознаки", "Значення", "Будова", "Відмінок"]
+        df = pd.DataFrame(results)
         
-    st.dataframe(df, use_container_width=True)
+        columns_to_keep = ["text", "lemma", "morphology", "Значення", "Будова", "Відмінок"]
+        
+        df = df[columns_to_keep]
+        
+        df.columns = ["Слово", "Лема", "Морфологічні Ознаки", "Значення", "Будова", "Відмінок"]
+        
+        st.dataframe(df, use_container_width=True)
