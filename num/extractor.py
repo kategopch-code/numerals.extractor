@@ -18,7 +18,7 @@ except Exception as e:
 def merge_numerals(doc):
     matcher = Matcher(doc.vocab)
     
-    noun_numerals = ["тисяча", "мільйон", "мільярд", "трильйон", "півтора", "півтори", "пів"]
+    noun_numerals = ["тисяча", "мільйон", "мільярд", "трильйон", "півтора", "півтори", "пів", "третина", "чверть", "половина"]
     
     pattern_compound = [
         [{"POS": "NUM"}, {"POS": "NUM", "OP": "+"}],
@@ -26,7 +26,9 @@ def merge_numerals(doc):
         [{"POS": "NUM"}, {"LOWER": "цілих"}, {"POS": "NUM", "OP": "*"}],
         [{"POS": "NUM"}, {"LOWER": "ціла"}, {"POS": "NUM", "OP": "*"}],
         [{"POS": "NUM"}, {"LEMMA": {"IN": noun_numerals}}, {"POS": "NUM", "OP": "*"}],
-        [{"LEMMA": {"IN": noun_numerals}}, {"POS": "NUM", "OP": "*"}]
+        [{"LEMMA": {"IN": noun_numerals}}, {"POS": "NUM", "OP": "*"}],
+        [{"POS": "NUM"}, {"POS": "ADJ", "OP": "+"}], 
+        [{"POS": "NUM"}, {"LEMMA": {"IN": noun_numerals}}, {"POS": "NUM", "OP": "*"}, {"POS": "ADJ", "OP": "*"}]
     ]
     matcher.add("COMPOUND_NUMERALS", pattern_compound)
     
@@ -93,10 +95,13 @@ def get_value_type(token, is_ordinal: bool) -> str:
     if "NumType=Sets" in morph or lemma in collective_lemmas:
         return "Кількісний (збірний)"
 
-    fractional_lemmas = ['півтора', 'півтори', 'пів', 'третина', 'чверть']
-    if "NumType=Frac" in morph or lemma in fractional_lemmas or "цілих" in text or "ціла" in text or re.search(r'\d+[.,\\/]\d+', text):
+    fractional_lemmas = ['півтора', 'півтори', 'пів', 'третина', 'чверть', 'половина']
+    if "NumType=Frac" in morph or lemma in fractional_lemmas or "цілих" in text or "ціла" in text or "третин" in text or re.search(r'\d+[.,\\/]\d+', text):
         return "Кількісний (дробовий)"
     
+    if " " in text and ("тисяч" in text or "десят" in text) and ("й" in text or "ому" in text or "ого" in text):
+         return "Порядковий"
+
     return "Кількісний (власне)"
 
 def analyze_numeral_details(token) -> Dict[str, str]:
@@ -140,14 +145,16 @@ def extract_numerals_info(text: str) -> List[Dict[str, Any]]:
         doc = merge_numerals(doc)
         results = []
         
-        noun_numerals = ["тисяча", "мільйон", "мільярд", "трильйон", "півтора", "півтори", "пів"]
-        
+        noun_numerals = ["тисяча", "мільйон", "мільярд", "трильйон", "півтора", "півтори", "пів", "третина", "чверть", "половина"]
+        indefinite_lemmas = ['кілька', 'декілька', 'багато', 'небагато', 'чимало', 'мало', 'скільки', 'стільки', 'немало']
+
         for token in doc:
             is_numeral = token.pos_ == "NUM"
             is_potential_ordinal = token.pos_ == "ADJ" and "NumType=Ord" in str(token.morph)
             is_noun_numeral = token.lemma_.lower() in noun_numerals
+            is_indefinite = token.lemma_.lower() in indefinite_lemmas
             
-            if is_numeral or is_potential_ordinal or is_noun_numeral:
+            if is_numeral or is_potential_ordinal or is_noun_numeral or is_indefinite:
                 details = analyze_numeral_details(token)
                 
                 results.append({
