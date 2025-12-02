@@ -2,13 +2,11 @@ import pytest
 import os
 from extractor import extract_numerals_info
 
-# Шлях до папки 'test_data', піднімаючись на один рівень вище з папки 'tests'
 TEST_DATA_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'test_data')
 
 def test_empty_input():
     assert extract_numerals_info("") == []
     assert extract_numerals_info("   ") == []
-    # assert extract_numerals_info(None) == [] # Залежить від того, як extractor обробляє None
 
 def test_no_numerals():
     text = "Проект розробляється на Python і є дуже цікавим."
